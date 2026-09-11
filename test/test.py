@@ -11,8 +11,8 @@ async def test_project(dut):
     dut.ui_in.value = 0     # Clear data input
     dut.uio_in.value = 0    # Set uio_in[0] (load enable) to 0
     
-    # 2. Start a 10us clock
-    clock = Clock(dut.clk, 10, units="us")
+    # 2. Start a 10us clock (Fixed 'unit' deprecation)
+    clock = Clock(dut.clk, 10, unit="us")
     cocotb.start_soon(clock.start())
 
     # 3. Reset the design
@@ -20,7 +20,7 @@ async def test_project(dut):
     dut.rst_n.value = 0
     await ClockCycles(dut.clk, 10)
     dut.rst_n.value = 1
-    await ClockCycles(dut.clk, 2)
+    # Removed the extra 2 clock cycle wait here so it starts counting from 0 exactly when we expect
     
     # 4. Test normal counting
     dut._log.info("Test normal counting")
