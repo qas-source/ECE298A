@@ -9,7 +9,7 @@ async def test_project(dut):
     # 1. Initialize inputs
     dut.ena.value = 1
     dut.ui_in.value = 0
-    dut.uio_in.value = 0
+    dut.uio_in.value = 0 # oe=0, load=0
     
     # 2. Start a 10us clock
     clock = Clock(dut.clk, 10, unit="us")
@@ -26,7 +26,8 @@ async def test_project(dut):
     
     # 4. Test normal counting
     dut._log.info("Test normal counting")
-    dut.uio_in.value = 0
+    # uio_in[1] = oe (1), uio_in[0] = load (0) -> Binary 10 -> Decimal 2
+    dut.uio_in.value = 2 
     
     await ClockCycles(dut.clk, 5) 
     # Check value on the falling edge so the output signal is completely stable
@@ -36,7 +37,8 @@ async def test_project(dut):
     # 5. Test the load function
     dut._log.info("Test loading a value (50)")
     dut.ui_in.value = 50
-    dut.uio_in.value = 1
+    # uio_in[1] = oe (1), uio_in[0] = load (1) -> Binary 11 -> Decimal 3
+    dut.uio_in.value = 3 
     
     await ClockCycles(dut.clk, 1)
     await FallingEdge(dut.clk)
@@ -44,8 +46,18 @@ async def test_project(dut):
     
     # 6. Test counting up from the loaded value
     dut._log.info("Test counting from loaded value")
-    dut.uio_in.value = 0
+    dut.uio_in.value = 2 
     
     await ClockCycles(dut.clk, 2)
     await FallingEdge(dut.clk)
     assert dut.uo_out.value == 52, f"Expected 52, got {int(dut.uo_out.value)}"
+
+    # 7. Test output enable disabled (Tri-state)
+    dut._log.info("Test output enable disabled (Tri-state)")
+    # uio_in[1] = oe (0), uio_in[0] = load (0) -> Binary 00 -> Decimal 0
+    dut.uio_in.value = 0 
+    
+    await ClockCycles(dut.clk, 1)
+    await FallingEdge(dut.clk)
+    # When output enable is low, the output should be high-impedance ('z')
+    assert str(dut.uo_out.value).lower() == 'zzzzzzzz', f"Expected zzzzzzzz, got {str(dut.uo_out.value)}"

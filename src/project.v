@@ -21,15 +21,17 @@ module tt_um_programmable_counter (
     // Define the load signal for clarity
     wire load = uio_in[0];
 
-    // Route the counter value to the dedicated output pins
-    assign uo_out = count;
+    // Define an output enable signal (e.g., using uio_in[1])
+    wire oe = uio_in[1];
 
-    always @(posedge clk) begin
-        // Synchronous active-low reset
+    // Tri-state output logic
+    assign uo_out = oe ? count : 8'bz;
+
+    // Add negedge rst_n to the sensitivity list for asynchronous reset
+    always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             count <= 8'b0;
         end else if (ena) begin
-            // Load the value from ui_in if load is high, otherwise increment
             if (load) begin
                 count <= ui_in;
             end else begin
